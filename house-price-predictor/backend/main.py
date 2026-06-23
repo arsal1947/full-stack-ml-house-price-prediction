@@ -7,18 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# =========================
-# AUTO TRAIN IF MODEL MISSING
-# =========================
-if not os.path.exists("house_model.joblib"):
-    print("Model not found. Training new model...")
-    from train import train_and_save_model
-    train_and_save_model()
-
-model = joblib.load("house_model.joblib")
-features = joblib.load("house_features.joblib")
-
-# CORS (ADD THIS EARLY in file after app = FastAPI())
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,6 +15,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# =========================
+# AUTO TRAIN IF MODEL MISSING
+# =========================
+if not os.path.exists("house_model.joblib"):
+    print("Model not found. Training new model...")
+    
+    # FIXED IMPORT (IMPORTANT)
+    from .train import train_and_save_model
+    train_and_save_model()
+
+# Load model
+model = joblib.load("house_model.joblib")
+features = joblib.load("house_features.joblib")
 
 # Input schema
 class HouseFeatures(BaseModel):
