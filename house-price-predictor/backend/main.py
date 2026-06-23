@@ -1,13 +1,20 @@
+import os
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
-import os
 
 app = FastAPI()
 
-# Load model
+# =========================
+# AUTO TRAIN IF MODEL MISSING
+# =========================
+if not os.path.exists("house_model.joblib"):
+    print("Model not found. Training new model...")
+    from train import train_and_save_model
+    train_and_save_model()
+
 model = joblib.load("house_model.joblib")
 features = joblib.load("house_features.joblib")
 
