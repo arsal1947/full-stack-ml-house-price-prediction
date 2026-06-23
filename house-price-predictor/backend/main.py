@@ -1,13 +1,43 @@
 import os
 import joblib
 import pandas as pd
+import gdown
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# =========================
+# CONFIG
+# =========================
+MODEL_PATH = "house_model.joblib"
+FEATURES_PATH = "house_features.joblib"
+
+# Google Drive file ID (from your link)
+FILE_ID = "11_R8EhbLg5UTMTJIHkz7PJbyOV6CY4r3"
+GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
+
+# =========================
+# DOWNLOAD MODEL IF NOT EXISTS
+# =========================
+if not os.path.exists(MODEL_PATH):
+    print("Model not found. Downloading from Google Drive...")
+    gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+
+# (Optional) features file handling
+if not os.path.exists(FEATURES_PATH):
+    print("Features file not found. Make sure you upload it to Drive too.")
+
+# =========================
+# LOAD MODEL
+# =========================
+model = joblib.load(MODEL_PATH)
+features = joblib.load(FEATURES_PATH)
+
+# =========================
 # CORS
+# =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,20 +47,8 @@ app.add_middleware(
 )
 
 # =========================
-# AUTO TRAIN IF MODEL MISSING
+# INPUT SCHEMA
 # =========================
-if not os.path.exists("house_model.joblib"):
-    print("Model not found. Training new model...")
-    
-    # FIXED IMPORT (IMPORTANT)
-    from .train import train_and_save_model
-    train_and_save_model()
-
-# Load model
-model = joblib.load("house_model.joblib")
-features = joblib.load("house_features.joblib")
-
-# Input schema
 class HouseFeatures(BaseModel):
     MedInc: float = Field(gt=0)
     HouseAge: float = Field(ge=0)
@@ -41,12 +59,13 @@ class HouseFeatures(BaseModel):
     Latitude: float = Field(ge=32, le=42)
     Longitude: float = Field(ge=-125, le=-114)
 
-# Home route
+# =========================
+# ROUTES
+# =========================
 @app.get("/")
 def home():
-    return {"message": "California home prediction api"}
+    return {"message": "California home prediction API"}
 
-# Health route
 @app.get("/health")
 def health():
     return {
@@ -55,7 +74,6 @@ def health():
         "features": features
     }
 
-# Prediction route
 @app.post("/predict")
 def predict(house: HouseFeatures):
     try:
