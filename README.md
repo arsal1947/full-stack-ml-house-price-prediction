@@ -1,6 +1,3 @@
-Here is your **complete polished README in one single clean file** (ready to paste into GitHub):
-
-```markdown
 # 🏠 Full-Stack ML House Price Prediction System
 
 A production-style end-to-end Machine Learning web application that predicts California house prices using a trained **Random Forest Regressor** model.  
