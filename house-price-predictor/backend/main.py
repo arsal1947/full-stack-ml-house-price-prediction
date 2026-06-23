@@ -9,31 +9,34 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 # =========================
-# CONFIG
+# FILE PATHS
 # =========================
 MODEL_PATH = "house_model.joblib"
 FEATURES_PATH = "house_features.joblib"
 
-# Google Drive file ID (from your link)
+# Google Drive model file ID
 FILE_ID = "11_R8EhbLg5UTMTJIHkz7PJbyOV6CY4r3"
 GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
 
 # =========================
-# DOWNLOAD MODEL IF NOT EXISTS
+# DOWNLOAD MODEL ONLY IF MISSING
 # =========================
 if not os.path.exists(MODEL_PATH):
     print("Model not found. Downloading from Google Drive...")
     gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
 
-# (Optional) features file handling
-if not os.path.exists(FEATURES_PATH):
-    print("Features file not found. Make sure you upload it to Drive too.")
+# =========================
+# LOAD MODEL + FEATURES
+# =========================
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    raise RuntimeError(f"Failed to load model: {e}")
 
-# =========================
-# LOAD MODEL
-# =========================
-model = joblib.load(MODEL_PATH)
-features = joblib.load(FEATURES_PATH)
+try:
+    features = joblib.load(FEATURES_PATH)
+except Exception as e:
+    raise RuntimeError(f"Failed to load features file: {e}")
 
 # =========================
 # CORS
@@ -70,7 +73,7 @@ def home():
 def health():
     return {
         "status": "running",
-        "model": "RandomForestRegressor",
+        "model_status": "loaded",
         "features": features
     }
 
