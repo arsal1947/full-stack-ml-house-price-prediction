@@ -1,10 +1,10 @@
 import os
 import joblib
 import pandas as pd
-import gdown
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
+from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 
@@ -14,29 +14,25 @@ app = FastAPI()
 MODEL_PATH = "house_model.joblib"
 FEATURES_PATH = "house_features.joblib"
 
-# Google Drive model file ID
-FILE_ID = "11_R8EhbLg5UTMTJIHkz7PJbyOV6CY4r3"
-GDRIVE_URL = f"https://drive.google.com/uc?id={FILE_ID}"
+# HuggingFace repo info
+REPO_ID = "arsal1947/house-price-model"
+MODEL_FILE = "house_model.joblib"
 
 # =========================
-# DOWNLOAD MODEL ONLY IF MISSING
+# DOWNLOAD MODEL IF NOT EXISTS
 # =========================
 if not os.path.exists(MODEL_PATH):
-    print("Model not found. Downloading from Google Drive...")
-    gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+    print("Downloading model from HuggingFace...")
+    MODEL_PATH = hf_hub_download(
+        repo_id=REPO_ID,
+        filename=MODEL_FILE
+    )
 
 # =========================
-# LOAD MODEL + FEATURES
+# LOAD FILES
 # =========================
-try:
-    model = joblib.load(MODEL_PATH)
-except Exception as e:
-    raise RuntimeError(f"Failed to load model: {e}")
-
-try:
-    features = joblib.load(FEATURES_PATH)
-except Exception as e:
-    raise RuntimeError(f"Failed to load features file: {e}")
+model = joblib.load(MODEL_PATH)
+features = joblib.load(FEATURES_PATH)
 
 # =========================
 # CORS
@@ -73,23 +69,14 @@ def home():
 def health():
     return {
         "status": "running",
-        "model_status": "loaded",
+        "model": "loaded",
         "features": features
     }
 
 @app.post("/predict")
 def predict(house: HouseFeatures):
     try:
-        input_data = pd.DataFrame([{
-            "MedInc": house.MedInc,
-            "HouseAge": house.HouseAge,
-            "AveRooms": house.AveRooms,
-            "AveBedrms": house.AveBedrms,
-            "Population": house.Population,
-            "AveOccup": house.AveOccup,
-            "Latitude": house.Latitude,
-            "Longitude": house.Longitude
-        }])
+        input_data = pd.DataFrame([house.dict()])
 
         predicted = model.predict(input_data)[0]
         price_usd = predicted * 100000
