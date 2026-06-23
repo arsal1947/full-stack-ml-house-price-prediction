@@ -8,31 +8,34 @@ from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 
-# =========================
-# FILE PATHS
-# =========================
 MODEL_PATH = "house_model.joblib"
 FEATURES_PATH = "house_features.joblib"
 
-# HuggingFace repo info
 REPO_ID = "arsal1947/house-price-model"
-MODEL_FILE = "house_model.joblib"
 
 # =========================
-# DOWNLOAD MODEL IF NOT EXISTS
+# 1. DOWNLOAD MODEL FIRST
 # =========================
 if not os.path.exists(MODEL_PATH):
     print("Downloading model from HuggingFace...")
     MODEL_PATH = hf_hub_download(
         repo_id=REPO_ID,
-        filename=MODEL_FILE
+        filename="house_model.joblib"
     )
 
 # =========================
-# LOAD FILES
+# 2. LOAD MODEL SAFELY
 # =========================
 model = joblib.load(MODEL_PATH)
-features = joblib.load(FEATURES_PATH)
+
+# =========================
+# 3. LOAD FEATURES SAFELY
+# =========================
+if os.path.exists(FEATURES_PATH):
+    features = joblib.load(FEATURES_PATH)
+else:
+    print("Warning: features file not found")
+    features = []
 
 # =========================
 # CORS
@@ -44,7 +47,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # =========================
 # INPUT SCHEMA
 # =========================
