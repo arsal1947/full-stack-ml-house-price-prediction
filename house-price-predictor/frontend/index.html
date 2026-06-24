@@ -325,7 +325,7 @@
   <div class="nav-pills">
     <a class="nav-pill active" href="#predictor">Predictor</a>
     <a class="nav-pill" href="#model">Model info</a>
-    <a class="nav-pill" href="http://127.0.0.1:8000/docs" target="_blank">API docs ↗</a>
+    <a class="nav-pill" href="https://full-stack-ml-house-price-prediction-production.up.railway.app/docs" target="_blank">API docs ↗</a>
   </div>
 </nav>
 
@@ -500,13 +500,12 @@
   <!-- DEPLOY BANNER -->
   <div class="deploy-banner">
     <div class="deploy-banner-left">
-      <h3>🚀 Ready to deploy?</h3>
-      <p>Deploy the backend to Railway or Render — frontend can go on Netlify or Vercel for free.</p>
+      <h3>🚀 Project is live!</h3>
+      <p>Backend deployed on Railway · Frontend deployed on Netlify.</p>
     </div>
     <div class="deploy-links">
-      <a class="deploy-link" href="https://railway.app" target="_blank">Railway ↗</a>
-      <a class="deploy-link" href="https://render.com" target="_blank">Render ↗</a>
-      <a class="deploy-link" href="https://netlify.com" target="_blank">Netlify ↗</a>
+      <a class="deploy-link" href="https://full-stack-ml-house-price-prediction-production.up.railway.app/docs" target="_blank">API docs ↗</a>
+      <a class="deploy-link" href="https://github.com/arsal1947/full-stack-ml-house-price-prediction" target="_blank">GitHub ↗</a>
     </div>
   </div>
 </main>
@@ -522,7 +521,7 @@
 </div>
 
 <script>
-const API = "http://127.0.0.1:8000";
+const API = "https://full-stack-ml-house-price-prediction-production.up.railway.app";
 
 const PRESETS = {
   sf:     { MedInc:8.3, HouseAge:42, AveRooms:5.0, AveBedrms:1.0, Population:900,  AveOccup:2.6, Latitude:37.77, Longitude:-122.42 },
@@ -581,12 +580,10 @@ async function predict() {
     showToast('Prediction complete', '#34d399');
 
   } catch (e) {
-    showError(
-      'Cannot reach API. Make sure backend is running:\nuvicorn main:app --reload'
-    );
+    showError('Cannot reach API. Please try again in a moment.');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `Run prediction`;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Run prediction`;
   }
 }
 
@@ -596,14 +593,11 @@ function showResult(data) {
   document.getElementById('metricGrid').classList.add('visible');
   document.getElementById('confSection').classList.add('visible');
 
-  // MAIN OUTPUT
   document.getElementById('priceMain').textContent = data.predicted_price;
   document.getElementById('priceRange').textContent = 'Range: ' + data.confidence_range;
   document.getElementById('mShort').textContent = data.predicted_price_short;
 
-  // SIMPLE FIXED CONFIDENCE (clean + stable)
   const conf = 82;
-
   document.getElementById('mConf').textContent = conf + '%';
   document.getElementById('confPct').textContent = conf + '%';
 
