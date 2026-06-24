@@ -1,6 +1,8 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pandas
+numpy
 joblib
 scikit-learn
+pydantic>=2.0
 huggingface_hub
