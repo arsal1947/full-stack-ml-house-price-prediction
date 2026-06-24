@@ -8,13 +8,13 @@ from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 
-MODEL_PATH = "house_model.joblib"
-FEATURES_PATH = "house_features.joblib"
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "house_model.joblib")
+FEATURES_PATH = os.path.join(BASE_DIR, "house_features.joblib")
 REPO_ID = "arsal1947/house-price-model"
 
 # =========================
-# 1. DOWNLOAD MODEL FIRST
+# 1. DOWNLOAD MODEL IF NOT LOCAL
 # =========================
 if not os.path.exists(MODEL_PATH):
     print("Downloading model from HuggingFace...")
@@ -26,14 +26,19 @@ if not os.path.exists(MODEL_PATH):
 # =========================
 # 2. LOAD MODEL SAFELY
 # =========================
-model = joblib.load(MODEL_PATH)
+try:
+    model = joblib.load(MODEL_PATH)
+    print("Model loaded successfully")
+except Exception as e:
+    print(f"CRITICAL: Model load failed: {e}")
+    model = None
 
 # =========================
 # 3. LOAD FEATURES SAFELY
 # =========================
-if os.path.exists(FEATURES_PATH):
+try:
     features = joblib.load(FEATURES_PATH)
-else:
+except Exception:
     print("Warning: features file not found")
     features = []
 
@@ -47,6 +52,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # =========================
 # INPUT SCHEMA
 # =========================
@@ -65,29 +71,28 @@ class HouseFeatures(BaseModel):
 # =========================
 @app.get("/")
 def home():
-    return {"message": "California home prediction API"}
+    return {"message": "California House Price Prediction API"}
 
 @app.get("/health")
 def health():
     return {
         "status": "running",
-        "model": "loaded",
+        "model": "loaded" if model is not None else "failed",
         "features": features
     }
 
 @app.post("/predict")
 def predict(house: HouseFeatures):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
     try:
-        input_data = pd.DataFrame([house.dict()])
-
+        input_data = pd.DataFrame([house.model_dump()])
         predicted = model.predict(input_data)[0]
         price_usd = predicted * 100000
-
         return {
             "predicted_price": f"${price_usd:,.0f}",
             "predicted_price_short": f"${predicted:.2f} hundred thousand",
             "confidence_range": f"${price_usd - 39000:,.0f} to ${price_usd + 39000:,.0f}"
         }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
